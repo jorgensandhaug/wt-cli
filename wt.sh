@@ -733,7 +733,7 @@ _wt_update() {
   fi
 }
 
-wt() {
+_wt_main() {
   _wt_setup_colors
   case "$1" in
     new) shift; _wt_new "$@" ;;
@@ -756,4 +756,11 @@ wt() {
       return 1
       ;;
   esac
+}
+
+wt() {
+  if ! type _wt_new &>/dev/null; then
+    source "$HOME/.wt/wt.sh"
+  fi
+  _wt_main "$@"
 }
