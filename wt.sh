@@ -234,6 +234,7 @@ _wt_new() {
   local use_existing=false
   local use_pr=false
   local run_up=false
+  local no_cd=false
   local branch_arg=""
 
   # Parse arguments
@@ -251,6 +252,10 @@ _wt_new() {
         run_up=true
         shift
         ;;
+      -n|--no-cd)
+        no_cd=true
+        shift
+        ;;
       *)
         branch_arg="$1"
         shift
@@ -263,6 +268,7 @@ _wt_new() {
     echo "       wt new -b <existing-branch>"
     echo "       wt new -p <pr-number>"
     echo "       wt new -u <branch>  (also run 'up' commands)"
+    echo "       wt new -n <branch>  (don't cd into worktree)"
     return 1
   fi
 
@@ -377,6 +383,11 @@ _wt_new() {
 
   if [[ "$run_up" == true ]]; then
     _wt_run_up_commands "$main_worktree" "$worktree_path"
+  fi
+
+  if [[ "$no_cd" == true ]]; then
+    echo "Worktree created at: $worktree_path"
+    return 0
   fi
 
   cd "$worktree_path" || return 1
