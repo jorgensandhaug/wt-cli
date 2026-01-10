@@ -436,25 +436,38 @@ _wt_ls() {
   fi
 
   echo "Worktrees:"
-  git worktree list --porcelain | while read -r line; do
+  local wt_path="" branch="" is_detached=false is_prunable=false
+
+  while IFS= read -r line; do
     if [[ "$line" == worktree\ * ]]; then
-      local wt_path="${line#worktree }"
-      local branch=""
-      local wt_status=""
-
-      # Read HEAD line
-      read -r _
-
-      # Read branch line
-      read -r branch_line
-      if [[ "$branch_line" == branch\ * ]]; then
-        branch="${branch_line#branch refs/heads/}"
+      wt_path="${line#worktree }"
+      branch=""
+      is_detached=false
+      is_prunable=false
+    elif [[ "$line" == branch\ * ]]; then
+      branch="${line#branch refs/heads/}"
+    elif [[ "$line" == "detached" ]]; then
+      is_detached=true
+    elif [[ "$line" == prunable\ * ]]; then
+      is_prunable=true
+    elif [[ -z "$line" && -n "$wt_path" ]]; then
+      # Empty line = end of entry, print it
+      if [[ "$is_prunable" == true ]]; then
+        # Skip prunable/stale worktrees
+        wt_path=""
+        continue
       fi
 
-      # Read empty line between entries
-      read -r _ || true
+      local display_name="$branch"
+      if [[ -z "$display_name" ]]; then
+        if [[ "$is_detached" == true ]]; then
+          display_name="(detached: $(basename "$wt_path"))"
+        else
+          display_name="(unknown)"
+        fi
+      fi
 
-      # Single git command to get status
+      local wt_status=""
       local status_check=""
       status_check="$(_wt_get_status "$wt_path")"
 
@@ -465,9 +478,10 @@ _wt_ls() {
         *) wt_status="${_wt_red}dirty${_wt_reset}" ;;
       esac
 
-      printf "  %-30s %s\n" "$branch" "[$wt_status]"
+      printf "  %-30s %s\n" "$display_name" "[$wt_status]"
+      wt_path=""
     fi
-  done
+  done < <(git worktree list --porcelain; echo)
 }
 
 _wt_find_worktree() {
