@@ -482,8 +482,6 @@ _wt_find_worktree() {
   main_worktree=$(_wt_get_main_worktree)
   local base_name
   base_name=$(basename "$main_worktree")
-  local parent_dir
-  parent_dir=$(dirname "$main_worktree")
 
   # Check if name matches main worktree
   if [[ "$name" == "$base_name" ]] || [[ "$name" == "main" ]]; then
@@ -497,12 +495,20 @@ _wt_find_worktree() {
     return 0
   fi
 
-  # Look in .worktrees/reponame/name
-  local wt_path="$parent_dir/.worktrees/$base_name/$name"
-  if [[ -d "$wt_path" ]] && git -C "$wt_path" rev-parse --git-dir &>/dev/null; then
-    echo "$wt_path"
-    return 0
-  fi
+  # Query git worktree list to find by branch name
+  local wt_path=""
+  local wt_branch=""
+  while IFS= read -r line; do
+    if [[ "$line" == worktree\ * ]]; then
+      wt_path="${line#worktree }"
+    elif [[ "$line" == branch\ * ]]; then
+      wt_branch="${line#branch refs/heads/}"
+      if [[ "$wt_branch" == "$name" ]]; then
+        echo "$wt_path"
+        return 0
+      fi
+    fi
+  done < <(git worktree list --porcelain)
 
   return 1
 }
