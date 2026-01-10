@@ -460,11 +460,7 @@ _wt_ls() {
 
       local display_name="$branch"
       if [[ -z "$display_name" ]]; then
-        if [[ "$is_detached" == true ]]; then
-          display_name="(detached: $(basename "$wt_path"))"
-        else
-          display_name="(unknown)"
-        fi
+        display_name="(detached)"
       fi
 
       local wt_status=""
@@ -478,7 +474,7 @@ _wt_ls() {
         *) wt_status="${_wt_red}dirty${_wt_reset}" ;;
       esac
 
-      printf "  %-30s %s\n" "$display_name" "[$wt_status]"
+      printf "  %-30s %-10s %s\n" "$display_name" "[$wt_status]" "$wt_path"
       wt_path=""
     fi
   done < <(git worktree list --porcelain; echo)
