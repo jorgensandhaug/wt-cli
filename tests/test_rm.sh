@@ -72,6 +72,18 @@ test_rm_with_full_path() {
   assert_success "Should remove worktree by full path"
 }
 
+test_rm_works_with_nonstandard_location() {
+  # Create worktree manually in non-standard location
+  local custom_path="$TEST_TEMP/custom-location/my-worktree"
+  mkdir -p "$(dirname "$custom_path")"
+  cd "$TEST_TEMP/main"
+  git worktree add -b custom-branch "$custom_path" >/dev/null 2>&1
+
+  wt rm custom-branch >/dev/null 2>&1
+  [[ ! -d "$custom_path" ]]
+  assert_success "Should remove worktree in non-standard location"
+}
+
 # Register tests
 run_test "wt rm removes clean worktree" test_rm_removes_clean_worktree
 run_test "wt rm warns on dirty worktree" test_rm_warns_on_dirty_worktree
@@ -81,3 +93,4 @@ run_test "wt rm without arg removes current" test_rm_current_worktree_no_arg
 run_test "wt rm cds back to main" test_rm_current_worktree_cds_to_main
 run_test "wt rm fails for nonexistent" test_rm_fails_for_nonexistent
 run_test "wt rm with full path" test_rm_with_full_path
+run_test "wt rm works with nonstandard location" test_rm_works_with_nonstandard_location
