@@ -26,6 +26,14 @@ remove_source_line() {
 remove_source_line "$HOME/.zshrc"
 remove_source_line "$HOME/.bashrc"
 
+# Remove fish config (requires different handling - multi-line block)
+fish_config="$HOME/.config/fish/config.fish"
+if [[ -f "$fish_config" ]] && grep -qF "# wt-cli" "$fish_config"; then
+  sed '/# wt-cli/,/^end$/d' "$fish_config" > "$fish_config.tmp"
+  mv "$fish_config.tmp" "$fish_config"
+  echo "Removed wt-cli from $fish_config"
+fi
+
 # Remove wt directory
 if [[ -d "$WT_DIR" ]]; then
   rm -rf "$WT_DIR"

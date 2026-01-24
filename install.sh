@@ -69,6 +69,27 @@ if [[ -f "$HOME/.bashrc" ]] || [[ "$SHELL" == *bash* ]]; then
   add_to_shell_config "$HOME/.bashrc"
 fi
 
+# Add to fish config
+if [[ -f "$HOME/.config/fish/config.fish" ]] || [[ "$SHELL" == *fish* ]]; then
+  fish_config="$HOME/.config/fish/config.fish"
+
+  mkdir -p "$HOME/.config/fish"
+  touch "$fish_config"
+
+  if ! grep -qF "# wt-cli" "$fish_config"; then
+    {
+      echo ""
+      echo "# wt-cli"
+      echo "function wt"
+      echo "    bash -c 'source \"\$HOME/.wt/wt.sh\" && _wt_main \"\$@\"' -- \$argv"
+      echo "end"
+    } >> "$fish_config"
+    echo "Added wt-cli to $fish_config"
+  else
+    echo "wt-cli already in $fish_config"
+  fi
+fi
+
 echo ""
 echo "wt-cli installed successfully!"
 echo ""
