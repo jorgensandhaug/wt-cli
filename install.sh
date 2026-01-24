@@ -69,6 +69,39 @@ if [[ -f "$HOME/.bashrc" ]] || [[ "$SHELL" == *bash* ]]; then
   add_to_shell_config "$HOME/.bashrc"
 fi
 
+# Add to fish config
+if [[ -f "$HOME/.config/fish/config.fish" ]] || [[ "$SHELL" == *fish* ]]; then
+  fish_config="$HOME/.config/fish/config.fish"
+
+  mkdir -p "$HOME/.config/fish"
+  touch "$fish_config"
+
+  if ! grep -qF "# wt-cli" "$fish_config"; then
+    {
+      echo ""
+      echo "# wt-cli"
+      echo "# The wt.sh script is written in bash. Fish cannot source bash scripts directly,"
+      echo "# so we run it in a bash subprocess. However, process state changes (like cd) in"
+      echo "# a subprocess don't affect the parent fish shell. To work around this, we capture"
+      echo "# bash's final working directory and do the cd in fish."
+      echo "function wt"
+      echo "    set -l tmpfile (mktemp)"
+      echo "    bash -c 'source \"\$HOME/.wt/wt.sh\" && _wt_main \"\$@\" && echo \"\$PWD\" > \"'\"\$tmpfile\"'\"' -- \$argv"
+      echo "    set -l exit_code \$status"
+      echo "    set -l new_dir (cat \$tmpfile)"
+      echo "    rm -f \$tmpfile"
+      echo "    if test -n \"\$new_dir\" -a -d \"\$new_dir\" -a \"\$new_dir\" != \"\$PWD\""
+      echo "        cd \$new_dir"
+      echo "    end"
+      echo "    return \$exit_code"
+      echo "end"
+    } >> "$fish_config"
+    echo "Added wt-cli to $fish_config"
+  else
+    echo "wt-cli already in $fish_config"
+  fi
+fi
+
 echo ""
 echo "wt-cli installed successfully!"
 echo ""

@@ -14,7 +14,7 @@ curl -sSL https://raw.githubusercontent.com/jorgensandhaug/wt-cli/main/install.s
 
 - `git`
 - `jq` (`brew install jq` on macOS, `apt install jq` on Ubuntu)
-- bash or zsh
+- bash, zsh, or fish
 
 ### Uninstall
 
