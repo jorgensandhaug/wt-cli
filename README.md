@@ -1,6 +1,6 @@
 # wt-cli
 
-Git worktree management CLI with colored status and Claude integration.
+Git worktree management CLI.
 
 [![Tests](https://github.com/jorgensandhaug/wt-cli/actions/workflows/test.yml/badge.svg)](https://github.com/jorgensandhaug/wt-cli/actions/workflows/test.yml)
 
