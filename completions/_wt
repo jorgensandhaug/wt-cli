@@ -1,0 +1,70 @@
+#compdef wt
+
+_wt_worktree_names() {
+  local -a names
+  # Skip first entry (main worktree), extract branch names from brackets
+  names=(${(f)"$(git worktree list 2>/dev/null | tail -n +2 | sed -n 's/.*\[\(.*\)\].*/\1/p')"})
+  compadd -a names
+}
+
+_wt_git_branches() {
+  local -a branches
+  branches=(${(f)"$(git branch -a 2>/dev/null | sed 's/^[* ]*//' | sed 's|remotes/origin/||' | sort -u)"})
+  compadd -a branches
+}
+
+_wt() {
+  local -a subcmds
+  subcmds=(
+    'new:Create new worktree'
+    'ls:List all worktrees with status'
+    'cd:Change to worktree (main if no name)'
+    'up:Run up commands (spin up dev environment)'
+    'down:Run down commands (spin down dev environment)'
+    'rm:Remove worktree'
+    'purge:Interactive cleanup of clean worktrees'
+    'prune:Clean up stale worktree references'
+    'config:Show path to config file'
+    'update:Update wt to latest version'
+    'uninstall:Uninstall wt-cli'
+    'version:Show version'
+    'help:Show help'
+  )
+
+  if (( CURRENT == 2 )); then
+    _describe 'command' subcmds
+    return
+  fi
+
+  case "${words[2]}" in
+    cd)
+      _wt_worktree_names
+      ;;
+    rm)
+      if [[ "${words[CURRENT-1]}" == "-f" ]]; then
+        _wt_worktree_names
+      elif [[ "${words[CURRENT]}" == -* ]]; then
+        compadd -- -f
+      else
+        _wt_worktree_names
+      fi
+      ;;
+    new)
+      case "${words[CURRENT-1]}" in
+        -b|--branch)
+          _wt_git_branches
+          ;;
+        -p|--pr|-u|--up|-n|--no-cd)
+          # no completion
+          ;;
+        *)
+          if [[ "${words[CURRENT]}" == -* ]]; then
+            compadd -- -b -p -u -n
+          fi
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_wt "$@"

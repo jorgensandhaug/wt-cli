@@ -33,6 +33,11 @@ echo "Downloading wt.sh..."
 curl -sSL "$BASE_URL/wt.sh" -o "$WT_SH"
 chmod +x "$WT_SH"
 
+# Download zsh completions
+echo "Downloading zsh completions..."
+mkdir -p "$WT_DIR/completions"
+curl -sSL "$BASE_URL/completions/_wt" -o "$WT_DIR/completions/_wt"
+
 # Create default config
 if [[ ! -f "$CONFIG_FILE" ]]; then
   mkdir -p "$CONFIG_DIR"
