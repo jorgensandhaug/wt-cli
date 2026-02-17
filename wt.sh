@@ -2,7 +2,7 @@
 # wt - Git worktree management CLI
 # https://github.com/jorgensandhaug/wt-cli
 
-_WT_VERSION="1.0.0"
+_WT_VERSION="1.1.0"
 
 _wt_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/wt"
 _wt_config_file="$_wt_config_dir/config.json"
@@ -788,3 +788,9 @@ wt() {
   fi
   _wt_main "$@"
 }
+
+# zsh completion
+if [[ -n "$ZSH_VERSION" ]]; then
+  fpath=(~/.wt/completions $fpath)
+  autoload -Uz compinit && compinit -C
+fi
