@@ -230,6 +230,50 @@ _wt_run_down_commands() {
   fi
 }
 
+_wt_sync_git_crypt_keys() {
+  local repo_root="$1"
+  local worktree_path="$2"
+  local common_git_dir source_keys target_git_dir target_dir
+
+  common_git_dir=$(git -C "$repo_root" rev-parse --git-common-dir 2>/dev/null) || return 0
+  source_keys="$common_git_dir/git-crypt/keys"
+  [[ -d "$source_keys" ]] || return 0
+
+  target_git_dir=$(git -C "$worktree_path" rev-parse --git-dir 2>/dev/null) || return 1
+  target_dir="$target_git_dir/git-crypt/keys"
+  mkdir -p "$target_dir"
+
+  # Keep per-worktree key files in sync for git-crypt smudge/clean filters.
+  if ! cp -f "$source_keys"/* "$target_dir"/ 2>/dev/null; then
+    return 0
+  fi
+
+  chmod 700 "$target_git_dir/git-crypt" "$target_dir" 2>/dev/null || true
+  chmod 600 "$target_dir"/* 2>/dev/null || true
+}
+
+_wt_add_worktree() {
+  local repo_root="$1"
+  local worktree_path="$2"
+  local branch_name="$3"
+  local create_new_branch="${4:-false}"
+  local add_cmd=(git worktree add --no-checkout)
+
+  if [[ "$create_new_branch" == "true" ]]; then
+    add_cmd+=(-b "$branch_name" "$worktree_path")
+  else
+    add_cmd+=("$worktree_path" "$branch_name")
+  fi
+
+  "${add_cmd[@]}" || return 1
+  _wt_sync_git_crypt_keys "$repo_root" "$worktree_path" || true
+
+  if ! git -C "$worktree_path" checkout "$branch_name"; then
+    git worktree remove --force "$worktree_path" >/dev/null 2>&1 || true
+    return 1
+  fi
+}
+
 _wt_new() {
   local use_existing=false
   local use_pr=false
@@ -332,7 +376,7 @@ _wt_new() {
     echo "  Branch: $branch_name"
     echo "  Path: $worktree_path"
 
-    if ! git worktree add "$worktree_path" "$branch_name"; then
+    if ! _wt_add_worktree "$repo_root" "$worktree_path" "$branch_name"; then
       echo "Error: Failed to create worktree"
       return 1
     fi
@@ -358,7 +402,7 @@ _wt_new() {
     echo "  Branch: $branch_name"
     echo "  Path: $worktree_path"
 
-    if ! git worktree add "$worktree_path" "$branch_name"; then
+    if ! _wt_add_worktree "$repo_root" "$worktree_path" "$branch_name"; then
       echo "Error: Failed to create worktree"
       return 1
     fi
@@ -373,7 +417,7 @@ _wt_new() {
     echo "  Branch: $branch_name"
     echo "  Path: $worktree_path"
 
-    if ! git worktree add -b "$branch_name" "$worktree_path"; then
+    if ! _wt_add_worktree "$repo_root" "$worktree_path" "$branch_name" true; then
       echo "Error: Failed to create worktree"
       return 1
     fi
